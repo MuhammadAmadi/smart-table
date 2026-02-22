@@ -5,34 +5,47 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
     const pageTemplate = pages.firstElementChild.cloneNode(true); // клонируем шаблон страницы
     pages.firstElementChild.remove(); // очищаем контейнер страниц
 
-    return (data, state, action) => {
-        // @todo: #2.1 — посчитать количество страниц, объявить переменные и константы
-        const rowsPerPage = state.rowsPerPage; // количество строк на странице
-        const pageCount = Math.ceil(data.length / rowsPerPage); // общее количество страниц
-        let page = state.page; // текущая страница
+    let pageCount; // счетчик страниц для нумерации
 
-        // @todo: #2.6 — обработать действия
-        if (action) switch (action.name) { 
-            case 'prev': page = Math.max(1, page - 1); break; //переход на предыдущую страницу
-            case 'next': page = Math.min(pageCount, page + 1); break; //переход на следующую страницу
-            case 'first': page = 1; break; //переход на первую страницу
-            case 'last': page = pageCount; break; //переход на последнюю страницу
+    const applyPagination = (query, state, action) => {
+        const limit = state.rowsPerPage;
+        let page = state.page;
+
+        if(action) {
+            switch (action.name) {
+                case 'prev': page = Math.max(1, page - 1); break; //переход на предыдущую страницу
+                case 'next': page = Math.min(pageCount, page + 1); break; //переход на следующую страницу
+                case 'first': page = 1; break; //переход на первую страницу
+                case 'last': page = pageCount; break; //переход на последнюю страницу
+            }
         }
 
-        // @todo: #2.4 — получить список видимых страниц и вывести их
-        const visiblePages = getPages(page, pageCount, 5); // получаем видимые страницы с лимитом 5
-        pages.replaceChildren(...visiblePages.map(pageNumber => { // создаем элементы страниц
+        return Object.assign({}, query, {
+            limit,
+            page
+        });
+    };
+
+    const updatePagination = (total, {page, limit}) => {
+        if(!page || !limit) {
+            console.error('Не указаны обязательные параметры пагинации: page и limit', {page, limit});
+            return;
+        }
+
+
+        pageCount = Math.ceil(total / limit);
+
+        const visiblePages = getPages(page, pageCount, 5); // получаем массив видимых страниц
+
+        pages.replaceChildren(...visiblePages.map(pageNumber => {
             const el = pageTemplate.cloneNode(true); // клонируем шаблон страницы
-            return createPage(el, pageNumber, pageNumber === page); // создаем страницу с выделением текущей
+            return createPage(el, pageNumber, pageNumber === page); // создаем элемент страницы и возвращаем его
         }));
 
-        // @todo: #2.5 — обновить статус пагинации
-        fromRow.textContent = (page - 1) * rowsPerPage + 1; // вычисляем номер первой строки на странице
-        toRow.textContent = Math.min(page * rowsPerPage, data.length); // вычисляем номер последней строки на странице
-        totalRows.textContent = data.length; // общее количество строк
+        fromRow.textContent = (page - 1) * limit + 1; // обновляем номер первой строки
+        toRow.textContent = Math.min(page * limit, total); // обновляем номер последней строки
+        totalRows.textContent = total; // обновляем общее количество строк
+    };
 
-        // @todo: #2.2 — посчитать сколько строк нужно пропустить и получить срез данных
-        const skip = (page - 1) * rowsPerPage; // количество строк для пропуска
-        return data.slice(skip, skip + rowsPerPage); // возвращаем срез данных для текущей страницы
-    }
+    return {applyPagination, updatePagination};
 }

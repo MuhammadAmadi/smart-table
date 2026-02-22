@@ -1,31 +1,30 @@
-import {createComparison, defaultRules} from "../lib/compare.js";
+// import {createComparison, defaultRules} from "../lib/compare.js";
 
 // @todo: #4.3 — настроить компаратор
-const compare = createComparison(defaultRules);
+// const compare = createComparison(defaultRules);
 
-export function initFiltering(elements, indexes) {
-    // @todo: #4.1 — заполнить выпадающие списки опциями
-    Object.keys(indexes).forEach(elementName => {
-        elements[elementName].append(
-            ...Object.values(indexes[elementName]).map(item => {
-                const option = document.createElement('option');
-                option.value = item;
-                option.textContent = item;
-                return option;
-            })
-        );
-    });
-    return (data, state, action) => {
-        // @todo: #4.2 — обработать очистку поля
+export function initFiltering(elements) {
+    const updateIndexes = (indexes) => {
+        elements.searchBySeller.innerHTML = '<option value="" selected>--</option>';
+
+        Object.values(indexes.sellers).forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            elements.searchBySeller.appendChild(option);
+        });
+    };
+
+    const applyFiltering = (query, state, action) => {
         if(action) {
             if(action.name === 'clear') {
                 const field = action.dataset.field;
                 if(field === 'date') {
                     elements.searchByDate.value = '';
-                } else if (field === 'customer') {
+                } else if(field === 'customer') {
                     elements.searchByCustomer.value = '';
                 }
-            } else if (action.dataset.name === 'reset') {
+            } else if (action.dataset?.name === 'reset') {
                 elements.searchByDate.value = '';
                 elements.searchByCustomer.value = '';
                 elements.searchBySeller.value = '';
@@ -33,23 +32,31 @@ export function initFiltering(elements, indexes) {
                 elements.totalTo.value = '';
             }
         }
-        // @todo: #4.5 — отфильтровать данные используя компаратор
-        const filterCriteria = {};
-        Object.keys(state).forEach(key => {
-            if (state[key] !== '') {
-                filterCriteria[key] = state[key];
-            }
-        });
 
-        if(state.totalFrom !== '' || state.totalTo !== '') { 
-            const from = state.totalFrom !== '' ? parseFloat(state.totalFrom) : '';
-            const to = state.totalTo !== '' ? parseFloat(state.totalTo) : '';
-            filterCriteria.total = [from, to];
+        const filter = {};
+
+        if(elements.searchByDate.value) {
+            filter['filter[date]'] = elements.searchByDate.value;
+        }
+        if(elements.searchByCustomer.value) {
+            filter['filter[customer]'] = elements.searchByCustomer.value;
+        }
+        if(elements.searchBySeller.value) {
+            filter['filter[seller]'] = elements.searchBySeller.value;
+        }
+        if(elements.totalFrom.value || elements.totalTo.value) {
+            if(elements.totalFrom.value) {
+                filter['filter[totalFrom]'] = elements.totalFrom.value;
+            }
+            if(elements.totalTo.value) {
+                filter['filter[totalTo]'] = elements.totalTo.value;
+            }
         }
 
-        delete filterCriteria.totalFrom;
-        delete filterCriteria.totalTo;
+        console.log("Параметры фильтрации:", filter);
 
-        return data.filter(row => compare(row, filterCriteria));
-    }
+        return Object.keys(filter).length ? Object.assign({}, query, filter) : query;
+    };
+
+    return {updateIndexes, applyFiltering};
 }
