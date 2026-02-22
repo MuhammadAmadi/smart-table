@@ -146,4 +146,6 @@ async function init() {
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
 
-init();
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+});

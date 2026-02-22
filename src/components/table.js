@@ -41,7 +41,7 @@ export function initTable(settings, onAction) {
     const render = (data) => {
         // @todo: #1.1 — преобразовать данные в массив строк на основе шаблона rowTemplate
 
-        const nextRows = data.map((item, index) => { // item — объект с данными для одной строки
+        const nextRows = data.map((item) => { // item — объект с данными для одной строки
             const row = cloneTemplate(rowTemplate); // row — клонированный шаблон строки
             Object.keys(item).forEach(key => { // перебираем ключи объекта с данными
                 const element = row.elements[key]; // ищем элемент в строке по имени ключа
