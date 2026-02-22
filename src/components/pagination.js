@@ -35,16 +35,15 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
 
         pageCount = Math.ceil(total / limit);
 
-        // if(pageCount === 0) {
-        //     const el = pageTemplate.cloneNode(true); // клонируем шаблон страницы
-        //     pages.replaceChildren(createPage(el, 1, true)); // очищаем контейнер страниц, если нет данных
-        //     fromRow.textContent = '0'; // обновляем номер первой строки
-        //     toRow.textContent = '0'; // обновляем номер последней строки
-        //     totalRows.textContent = '0'; // обновляем общее количество строк
-        //     return;
-        // }
-        const displayPageCount = pageCount > 0 ? pageCount : 5; // количество отображаемых страниц (не менее 5)
-        const visiblePages = getPages(page, displayPageCount, 5); // получаем массив видимых страниц
+        if(pageCount === 0) {
+            pages.replaceChildren(); // очищаем контейнер страниц, если нет данных
+            fromRow.textContent = '0';
+            toRow.textContent = '0';
+            totalRows.textContent = '0';
+            return;
+        }
+
+        const visiblePages = getPages(page, pageCount, 5); // получаем массив видимых страниц
 
         pages.replaceChildren(...visiblePages.map(pageNumber => {
             const el = pageTemplate.cloneNode(true); // клонируем шаблон страницы

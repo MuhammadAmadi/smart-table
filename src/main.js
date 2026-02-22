@@ -1,16 +1,13 @@
 import './fonts/ys-display/fonts.css';
 import './style.css';
 
-import {processFormData} from "./lib/utils.js";
-
-import {initTable} from "./components/table.js";
-// @todo: подключение
+import { processFormData } from "./lib/utils.js";
+import { initTable } from "./components/table.js";
 import { initPagination } from './components/pagination.js';
 import { initSorting } from './components/sorting.js';
 import { initFiltering } from './components/filtering.js';
 import { initSearching } from './components/searching.js';
-
-import {initData} from "./data.js";
+import { initData } from "./data.js";
 
 let api;
 let applyPagination;
@@ -58,24 +55,15 @@ async function render(action) {
        page: state.page
     }; // копируем для последующего изменения
     
-    if(applyFiltering) {
-        query = applyFiltering(query, state, action);
-    }
-    if(applySearching) {
-        query = applySearching(query, state, action);
-    }
-    if(applySorting) {
-        query = applySorting(query, state, action);
-    }
-    if(applyPagination) {
-        query = applyPagination(query, state, action);
-    }
+    if(applyFiltering) query = applyFiltering(query, state, action);
+    if(applySearching) query = applySearching(query, state, action);
+    if(applySorting) query = applySorting(query, state, action);
+    if(applyPagination) query = applyPagination(query, state, action);
+    
 
     const {total, items} = await api.getRecords(query);
 
-    if(updatePagination) {
-        updatePagination(total, query);
-    }
+    if(updatePagination) updatePagination(total, query);
 
     sampleTable.render(items);
 }

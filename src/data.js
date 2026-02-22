@@ -28,13 +28,17 @@ const getIndexes = async () => {
 };
 
 const getRecords = async (query, isUpdate = false) => {
-    const nextQuery = new URLSearchParams(query).toString();
+    const qs = new URLSearchParams(query);
+    const nextQuery = qs.toString();
 
     if (lastQuery === nextQuery && !isUpdate) {
         return lastResult;
     }
 
     const response = await fetch(`${BASE_URL}/records?${nextQuery}`);
+    if (!response.ok) {
+        throw new Error(`Ошибка при загрузке данных: ${response.statusText}`);
+    }
     const records = await response.json();
 
     lastQuery = nextQuery;
