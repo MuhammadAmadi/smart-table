@@ -53,6 +53,8 @@ export function initFiltering(elements) {
             }
         }
 
+        console.log("Параметры фильтрации:", filter);
+
         return Object.keys(filter).length ? Object.assign({}, query, filter) : query;
     };
 

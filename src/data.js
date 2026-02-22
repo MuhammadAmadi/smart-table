@@ -52,15 +52,20 @@ const getRecords = async (query, isUpdate = false) => {
     let result = [...allRecords];
 
     const filter = parseFilter(query);
+    console.log('Фильтр для сравнения:', filter);
+
     if(Object.keys(filter).length > 0) {
-        result = result.filter(item => compare(item, filter, [
-            rules.skipNonExistentSourceFields(item),
-            rules.skipEmptyTargetValues(),
-            rules.failOnEmptySource(),
-            rules.arrayAsRange(),
-            rules.stringIncludes(),
-            rules.exactEquality()
-        ]));
+        result = result.filter(item => {
+            const matches = compare(item, filter, [
+                rules.skipNonExistentSourceFields(item),
+                rules.skipEmptyTargetValues(),
+                rules.failOnEmptySource(),
+                rules.arrayAsRange(),
+                rules.stringIncludes(),
+                rules.exactEquality()
+            ]);
+            return matches;
+        });
     }
 
     if (query.search) {
@@ -86,6 +91,8 @@ const getRecords = async (query, isUpdate = false) => {
     const start = (page - 1) * limit;
     const end = start + limit;
     const items = result.slice(start, end);
+
+    console.log('Результат:', { total, items: items.length });
 
     lastQuery = nextQuery;
     lastResult = { total, items };
