@@ -1,9 +1,9 @@
 import {makeIndex} from "./lib/utils.js";
 import {data as sourceData} from "./data/dataset_1.js";
-import { createComparison, defaultRules, rules } from "./lib/compare.js";
+// import { createComparison, defaultRules, rules } from "./lib/compare.js";
 import { sortCollection } from "./lib/sort.js";
 
-const BASE_URL = 'https://webinars.webdev.education-services.ru/sp7-api';
+// const BASE_URL = 'https://webinars.webdev.education-services.ru/sp7-api';
 
 const sellers = makeIndex(sourceData.sellers, 'id', v => `${v.first_name} ${v.last_name}`);
 const customers = makeIndex(sourceData.customers, 'id', v => `${v.first_name} ${v.last_name}`);
@@ -16,25 +16,6 @@ const allRecords = sourceData.purchase_records.map(item => ({
     total: item.total_amount
 }));
 
-const compare = createComparison(defaultRules);
-
-const parseFilter = (query) => {
-    const filter = {};
-    if(query['filter[date]']) filter.date = query['filter[date]'];
-    if(query['filter[customer]']) filter.customer = query['filter[customer]'];
-    if(query['filter[seller]']) filter.seller = query['filter[seller]'];
-    if(query['filter[totalFrom]'] || query['filter[totalTo]']) {
-        const from = parseFloat(query['filter[totalFrom]']);
-        const to = parseFloat(query['filter[totalTo]']);
-        if(!isNaN(from) || !isNaN(to)) {
-            filter.total = [isNaN(from) ? null : from, isNaN(to) ? null : to];
-        }
-    }
-    return filter;
-};
-
-let lastResult = null;
-let lastQuery = null;
 
 const getIndexes = async () => {
     await new Promise(resolve => setTimeout(resolve, 10)); // имитация задержки
@@ -44,27 +25,30 @@ const getIndexes = async () => {
 const getRecords = async (query, isUpdate = false) => {
     await new Promise(resolve => setTimeout(resolve, 10)); // имитация задержки
 
-    const nextQuery = JSON.stringify(query);
-
-    if(lastQuery === nextQuery && !isUpdate && lastResult) {
-        return lastResult;
-    }
     let result = [...allRecords];
 
-    const filter = parseFilter(query);
-    console.log('Фильтр для сравнения:', filter);
+    if(query['filter[date]']) {
+        const dateFilter = query['filter[date]'];
+        result = result.filter(item => item.date.includes(dateFilter));
+    }
 
-    if(Object.keys(filter).length > 0) {
+    if(query['filter[customer]']) {
+        const customerFilter = query['filter[customer]'].toLowerCase();
+        result = result.filter(item => item.customer.toLowerCase().includes(customerFilter));
+    }
+
+    if(query['filter[seller]']) {
+        const sellerFilter = query['filter[seller]'];
+        result = result.filter(item => item.seller === sellerFilter);
+    }
+
+    const totalFrom = parseFloat(query['filter[totalFrom]']);
+    const totalTo = parseFloat(query['filter[totalTo]']);
+    if (!isNaN(totalFrom) || !isNaN(totalTo)) {
         result = result.filter(item => {
-            const matches = compare(item, filter, [
-                rules.skipNonExistentSourceFields(item),
-                rules.skipEmptyTargetValues(),
-                rules.failOnEmptySource(),
-                rules.arrayAsRange(),
-                rules.stringIncludes(),
-                rules.exactEquality()
-            ]);
-            return matches;
+            if (!isNaN(totalFrom) && item.total < totalFrom) return false;
+            if (!isNaN(totalTo) && item.total > totalTo) return false;
+            return true;
         });
     }
 
@@ -92,12 +76,7 @@ const getRecords = async (query, isUpdate = false) => {
     const end = start + limit;
     const items = result.slice(start, end);
 
-    console.log('Результат:', { total, items: items.length });
-
-    lastQuery = nextQuery;
-    lastResult = { total, items };
-
-    return lastResult;
+    return { total, items };
 };
 
 export function initData() {
