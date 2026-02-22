@@ -149,4 +149,6 @@ appRoot.appendChild(sampleTable.container);
 
 
 
-await init();
+(async () =>{
+    await init();
+})();
