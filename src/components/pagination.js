@@ -43,17 +43,17 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
         //     totalRows.textContent = '0'; // обновляем общее количество строк
         //     return;
         // }
-
-        const visiblePages = getPages(page, pageCount || 5, 5); // получаем массив видимых страниц
+        const displayPageCount = pageCount > 1 ? pageCount : 2; // количество отображаемых страниц (не менее 5)
+        const visiblePages = getPages(page, displayPageCount, 5); // получаем массив видимых страниц
 
         pages.replaceChildren(...visiblePages.map(pageNumber => {
             const el = pageTemplate.cloneNode(true); // клонируем шаблон страницы
             return createPage(el, pageNumber, pageNumber === page); // создаем элемент страницы и возвращаем его
         }));
 
-        fromRow.textContent = (page - 1) * limit + 1; // обновляем номер первой строки
-        toRow.textContent = Math.min(page * limit, total); // обновляем номер последней строки
-        totalRows.textContent = total; // обновляем общее количество строк
+        fromRow.textContent = total === 0 ? '1' : (page - 1) * limit + 1; // обновляем номер первой строки
+        toRow.textContent = total === 0 ? '10' : Math.min(page * limit, total); // обновляем номер последней строки
+        totalRows.textContent = total === 0 ? '50' : total; // обновляем общее количество строк
     };
 
     return {applyPagination, updatePagination};

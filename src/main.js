@@ -72,20 +72,27 @@ async function render(action) {
         query = applyPagination(query, state, action);
     }
 
-    sampleTable.render([]); // рендерим пустую таблицу для отображения загрузки
-
     const {total, items} = await api.getRecords(query);
 
     if(updatePagination) {
         updatePagination(total, query);
     }
 
-    sampleTable.render(items);
+    if(items && items.length > 0) {
+        sampleTable.render(items);
+    } else {
+        sampleTable.render([]); // рендерим пустую таблицу, если нет данных
+    }
 }
 
 async function init() {
     api = initData();
     try {    
+
+        if(updatePagination) {
+            updatePagination(50, {page: 1, limit: 10}); // рендерим пустую пагинацию для отображения загрузки
+        }
+
         sampleTable.render([]); // рендерим пустую таблицу для отображения загрузки
 
         const indexes = await api.getIndexes();
@@ -118,10 +125,16 @@ async function init() {
         applyPagination = paginationHandlers.applyPagination;
         updatePagination = paginationHandlers.updatePagination;
         
+        updatePagination(50, { page: 1, limit: 10 }); // рендерим пустую пагинацию для отображения загрузки
+
         await render();
         
     } catch (error) {
         console.error('Ошибка при инициализации приложения', error);
+        if(updatePagination) {
+            updatePagination(50, { page: 1, limit: 10 }); // рендерим пустую пагинацию при ошибке
+        }
+        sampleTable.render([]); // рендерим пустую таблицу при ошибке
     }
 }
 
