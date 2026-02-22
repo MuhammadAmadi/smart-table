@@ -1,3 +1,4 @@
+//window.tableReady = false; // флаг готовности таблицы
 import './fonts/ys-display/fonts.css';
 import './style.css';
 
@@ -77,7 +78,7 @@ async function render(action) {
         updatePagination(total, query);
     }
 
-    sampleTable.render([]);
+    sampleTable.render(items);
 }
 
 async function init() {
