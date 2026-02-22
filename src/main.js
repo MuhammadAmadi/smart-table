@@ -72,6 +72,8 @@ async function render(action) {
         query = applyPagination(query, state, action);
     }
 
+    sampleTable.render([]); // рендерим пустую таблицу для отображения загрузки
+
     const {total, items} = await api.getRecords(query);
 
     if(updatePagination) {
@@ -79,13 +81,13 @@ async function render(action) {
     }
 
     sampleTable.render(items);
-    window.tableReady = true; // устанавливаем флаг готовности таблицы после первого рендера
-    document.body.setAttribute('data-table-ready', 'true'); // добавляем атрибут для стилизации готовности
 }
 
 async function init() {
     api = initData();
     try {    
+        sampleTable.render([]); // рендерим пустую таблицу для отображения загрузки
+
         const indexes = await api.getIndexes();
 
         applySearching = initSearching('search');

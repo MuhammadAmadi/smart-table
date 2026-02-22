@@ -27,16 +27,17 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
     };
 
     const updatePagination = (total, {page, limit}) => {
+
         if(!page || !limit) {
             console.error('Не указаны обязательные параметры пагинации: page и limit', {page, limit});
             return;
         }
 
-
         pageCount = Math.ceil(total / limit);
 
         if(pageCount === 0) {
-            pages.replaceChildren(); // очищаем контейнер страниц, если нет данных
+            const el = pageTemplate.cloneNode(true); // клонируем шаблон страницы
+            pages.replaceChildren(createPage(el, 1, true)); // очищаем контейнер страниц, если нет данных
             fromRow.textContent = '0'; // обновляем номер первой строки
             toRow.textContent = '0'; // обновляем номер последней строки
             totalRows.textContent = '0'; // обновляем общее количество строк
