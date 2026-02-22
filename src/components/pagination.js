@@ -51,9 +51,9 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
             return createPage(el, pageNumber, pageNumber === page); // создаем элемент страницы и возвращаем его
         }));
 
-        fromRow.textContent = total === 0 ? '1' : (page - 1) * limit + 1; // обновляем номер первой строки
-        toRow.textContent = total === 0 ? '10' : Math.min(page * limit, total); // обновляем номер последней строки
-        totalRows.textContent = total === 0 ? '50' : total; // обновляем общее количество строк
+        fromRow.textContent = total === 0 ? '0' : (page - 1) * limit + 1; // обновляем номер первой строки
+        toRow.textContent = total === 0 ? '0' : Math.min(page * limit, total); // обновляем номер последней строки
+        totalRows.textContent = total; // обновляем общее количество строк
     };
 
     return {applyPagination, updatePagination};
