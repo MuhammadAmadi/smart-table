@@ -36,13 +36,27 @@ function collectState() {
     };
 }
 
+const sampleTable = initTable({
+    tableTemplate: 'table',
+    rowTemplate: 'row',
+    before: ['search','header', 'filter'],
+    after: ['pagination']
+}, render);
+
 /**
  * Перерисовка состояния таблицы при любых изменениях
  * @param {HTMLButtonElement?} action
  */
 async function render(action) {
     let state = collectState(); // состояние полей из таблицы
-    let query = {}; // копируем для последующего изменения
+
+    if(!state.rowsPerPage) state.rowsPerPage = 10; // значение по умолчанию для количества строк на странице
+    if(!state.page) state.page = 1; // значение по умолчанию для текущей страницы
+
+    let query = {
+       limit: state.rowsPerPage,
+       page: state.page
+    }; // копируем для последующего изменения
     // @todo: использование
     // result = applySearching(result, state, action);
     // result = applyFiltering(result, state, action);
@@ -52,7 +66,7 @@ async function render(action) {
     if(action?.dataset?.name === 'reset') {
         console.log('Сброс фильтров');
     }
-
+    
     if(applyFiltering) {
         query = applyFiltering(query, state, action);
     }
@@ -74,15 +88,15 @@ async function render(action) {
         updatePagination(total, query);
     }
 
-    sampleTable.render(items);
+    if(items && items.length > 0) {
+        sampleTable.render(items);
+    } else {
+        console.warn('Нет данных для отображения');
+        sampleTable.render([]);
+    }
 }
 
-const sampleTable = initTable({
-    tableTemplate: 'table',
-    rowTemplate: 'row',
-    before: ['search','header', 'filter'],
-    after: ['pagination']
-}, render);
+
 
 // @todo: инициализация
 // const applyPagination = initPagination(
@@ -98,38 +112,45 @@ const sampleTable = initTable({
 // );
 
 async function init() {
+    console.log('Инициализация приложения...');
     api = initData();
-    const indexes = await api.getIndexes();
+    try {    
+        const indexes = await api.getIndexes();
+        console.log('Полученные индексы', indexes);
 
-    applySearching = initSearching('search');
+        applySearching = initSearching('search');
 
-    applySorting = initSorting([
-        sampleTable.header.elements.sortByDate,
-        sampleTable.header.elements.sortByTotal
-    ]);
+        applySorting = initSorting([
+            sampleTable.header.elements.sortByDate,
+            sampleTable.header.elements.sortByTotal
+        ]);
 
-    const filteringHandlers = initFiltering(sampleTable.filter.elements);
-    applyFiltering = filteringHandlers.applyFiltering;
-    updateIndexes = filteringHandlers.updateIndexes;
-    
-    updateIndexes(indexes);
+        const filteringHandlers = initFiltering(sampleTable.filter.elements);
+        applyFiltering = filteringHandlers.applyFiltering;
+        updateIndexes = filteringHandlers.updateIndexes;
+        
+        updateIndexes(indexes);
 
-    const paginationHandlers = initPagination(
-        sampleTable.pagination.elements,
-        (el, page, isCurrent) => {
-            const input = el.querySelector('input');
-            const label = el.querySelector('span');
-            input.value = page;
-            input.checked = isCurrent;
-            label.textContent = page;
-            return el;
-        }
-    );
+        const paginationHandlers = initPagination(
+            sampleTable.pagination.elements,
+            (el, page, isCurrent) => {
+                const input = el.querySelector('input');
+                const label = el.querySelector('span');
+                input.value = page;
+                input.checked = isCurrent;
+                label.textContent = page;
+                return el;
+            }
+        );
 
-    applyPagination = paginationHandlers.applyPagination;
-    updatePagination = paginationHandlers.updatePagination;
-
-    await render();
+        applyPagination = paginationHandlers.applyPagination;
+        updatePagination = paginationHandlers.updatePagination;
+        console.log('Инициализация завершена, выполняется первый рендер...');
+        await render();
+        console.log('Первый рендер завершен');
+    } catch (error) {
+        console.error('Ошибка при инициализации приложения', error);
+    }
 }
 
 // const applySorting = initSorting([
@@ -149,6 +170,12 @@ appRoot.appendChild(sampleTable.container);
 
 
 
-(async () =>{
-    await init();
+(async function () {
+    try {
+        console.log('Инициализация приложения...');
+        await init();
+        console.log('Приложение успешно инициализировано');
+    } catch (error) {
+        console.error('Ошибка при инициализации приложения', error);
+    }
 })();

@@ -5,7 +5,7 @@
 
 export function initFiltering(elements) {
     const updateIndexes = (indexes) => {
-        elements.searchBySeller.innerHTML = '<option value="" selected>--</option>';
+        elements.searchBySeller.innerHTML = '<option value="" selected>-</option>';
 
         Object.values(indexes.sellers).forEach(name => {
             const option = document.createElement('option');
