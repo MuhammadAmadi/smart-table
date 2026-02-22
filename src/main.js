@@ -1,4 +1,3 @@
-window.tableReady = false; // флаг готовности таблицы
 import './fonts/ys-display/fonts.css';
 import './style.css';
 
@@ -20,8 +19,6 @@ let applyFiltering;
 let updateIndexes;
 let applySearching;
 let applySorting;
-
-window.tableReady = false; // таблица готова к взаимодействию
 
 /**
  * Сбор и обработка полей из таблицы
@@ -80,25 +77,12 @@ async function render(action) {
         updatePagination(total, query);
     }
 
-    if(items && items.length > 0) {
-        sampleTable.render(items);
-    } else {
-        sampleTable.render([]); // рендерим пустую таблицу, если нет данных
-    }
-    window.tableReady = true; // таблица готова к взаимодействию
-    document.body.setAttribute('data-table-ready', 'true');
+    sampleTable.render(items);
 }
 
 async function init() {
     api = initData();
     try {    
-
-        if(updatePagination) {
-            updatePagination(50, {page: 1, limit: 10}); // рендерим пустую пагинацию для отображения загрузки
-        }
-
-        sampleTable.render([]); // рендерим пустую таблицу для отображения загрузки
-
         const indexes = await api.getIndexes();
 
         applySearching = initSearching('search');
@@ -128,17 +112,11 @@ async function init() {
 
         applyPagination = paginationHandlers.applyPagination;
         updatePagination = paginationHandlers.updatePagination;
-        
-        updatePagination(50, { page: 1, limit: 10 }); // рендерим пустую пагинацию для отображения загрузки
 
         await render();
         
     } catch (error) {
         console.error('Ошибка при инициализации приложения', error);
-        if(updatePagination) {
-            updatePagination(50, { page: 1, limit: 10 }); // рендерим пустую пагинацию при ошибке
-        }
-        sampleTable.render([]); // рендерим пустую таблицу при ошибке
     }
 }
 
@@ -146,6 +124,4 @@ async function init() {
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
 
-document.addEventListener('DOMContentLoaded', () => {
-    init();
-});
+init();

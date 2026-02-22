@@ -1,117 +1,96 @@
 import {makeIndex} from "./lib/utils.js";
 import {data as sourceData} from "./data/dataset_1.js";
+import { createComparison, defaultRules, rules } from "./lib/compare.js";
+import { sortCollection } from "./lib/sort.js";
 
 const BASE_URL = 'https://webinars.webdev.education-services.ru/sp7-api';
 
-let sellers;
-let customers;
-let lastResult;
-let lastQuery;
+const sellers = makeIndex(sourceData.sellers, 'id', v => `${v.first_name} ${v.last_name}`);
+const customers = makeIndex(sourceData.customers, 'id', v => `${v.first_name} ${v.last_name}`);
 
-const mapRecords = (data) => {
-    if(!data || !Array.isArray(data)) {
-        console.error('Некорректные данные для отображения', data);
-        return [];
+const allRecords = sourceData.purchase_records.map(item => ({
+    id: item.receipt_id,
+    date: item.date,
+    seller: sellers[item.seller_id],
+    customer: customers[item.customer_id],
+    total: item.total_amount
+}));
+
+const compare = createComparison(defaultRules);
+
+const parseFilter = (query) => {
+    const filter = {};
+    if(query['filter[date]']) filter.date = query['filter[date]'];
+    if(query['filter[customer]']) filter.customer = query['filter[customer]'];
+    if(query['filter[seller]']) filter.seller = query['filter[seller]'];
+    if(query['filter[totalFrom]'] || query['filter[totalTo]']) {
+        const from = parseFloat(query['filter[totalFrom]']);
+        const to = parseFloat(query['filter[totalTo]']);
+        if(!isNaN(from) || !isNaN(to)) {
+            filter.total = [isNaN(from) ? null : from, isNaN(to) ? null : to];
+        }
     }
-
-    console.log('входные данные', data[0]);
-    console.log('продавцы', sellers);
-    console.log('покупатели', customers);
-
-    return data.map(item => {
-        const sellerName = sellers ? sellers[item.seller_id] : 'Неизвестно';
-        const customerName = customers ? customers[item.customer_id] : 'Неизвестно';
-
-        if(item.receipt_id === 'receipt_1') {
-            console.log('Преобразование записи', {
-                id: item.receipt_id,
-                seller_id: item.seller_id,
-                customer_id: item.customer_id,
-                customer_name: customerName,
-                expected_seller: 'Nikolai Ivanov',
-                expected_customer: 'Andrey Alekseev'
-            });
-        }
-
-        return {
-            id: item.receipt_id,
-            date: item.date,
-            seller: sellerName,
-            customer: customerName,
-            total: item.total_amount
-        }
-    });
+    return filter;
 };
+
+let lastResult = null;
+let lastQuery = null;
 
 const getIndexes = async () => {
-    if(!sellers || !customers) {
-        [sellers, customers] = await Promise.all([
-            fetch(`${BASE_URL}/sellers`).then(res => res.json()),
-            fetch(`${BASE_URL}/customers`).then(res => res.json())
-        ]);
-
-        console.log('Загруженные продавцы', sellers);
-        console.log('Загруженные покупатели', customers);
-
-        const localData = initLocalData(sourceData);
-        console.log('Локальные продавцы', localData.sellers);
-        console.log('Локальные покупатели', localData.customers);
-    }
+    await new Promise(resolve => setTimeout(resolve, 10)); // имитация задержки
     return { sellers, customers };
 };
 
-function initLocalData(sourceData) {
-    const sellers = makeIndex(sourceData.sellers, 'id', v => `${v.first_name} ${v.last_name}`);
-    const customers = makeIndex(sourceData.customers, 'id', v => `${v.first_name} ${v.last_name}`);
-    return { sellers, customers };
-}
-
 const getRecords = async (query, isUpdate = false) => {
-    const nextQuery = new URLSearchParams(query).toString();
+    await new Promise(resolve => setTimeout(resolve, 10)); // имитация задержки
 
-    console.log('=== ВЫЗОВ API ===');
-    console.log('Объект запроса', query);
-    console.log('Строка запроса', nextQuery);
-    console.log('Полный URL', `${BASE_URL}/records?${nextQuery}`);
+    const nextQuery = JSON.stringify(query);
 
-    if(lastQuery === nextQuery && !isUpdate) {
-        console.log('=== ИСПОЛЬЗОВАНИЕ КЭША ===');
+    if(lastQuery === nextQuery && !isUpdate && lastResult) {
         return lastResult;
     }
+    let result = [...allRecords];
 
-    try {
-        const response = await fetch(`${BASE_URL}/records?${nextQuery}`);
-        console.log('Статус ответа', response.status);
-        if(!response.ok) {
-            throw new Error(`Ошибка при загрузке данных: ${response.status}`);
-        }
-
-        const records = await response.json();
-        console.log('Ответ API', records);
-
-        if(!records || !records.items) {
-            console.error('Некорректный ответ API', records);
-            return { total: 0, items: [] };
-        }
-
-        lastQuery = nextQuery;
-        lastResult = {
-            total: records.total,
-            items: mapRecords(records.items)
-        };
-
-        console.log('Преобразованные данные (первые 3)', lastResult.items.slice(0, 3));
-        console.log('Ожидаемые данные (первые 3):', [
-            { date: '2023-12-04', customer: 'Andrey Alekseev', seller: 'Nikolai Ivanov', total: 4657.56 },
-            { date: '2023-12-04', customer: 'Andrey Alekseev', seller: 'Alexey Petrov', total: 5015.02 },
-            { date: '2024-01-04', customer: 'Andrey Alekseev', seller: 'Alexey Petrov', total: 875.65 }
-        ]);
-
-        return lastResult;
-    } catch (error) {
-        console.error('Ошибка при загрузке данных', error);
-        return { total: 0, items: [] };
+    const filter = parseFilter(query);
+    if(Object.keys(filter).length > 0) {
+        result = result.filter(item => compare(item, filter, [
+            rules.skipNonExistentSourceFields(item),
+            rules.skipEmptyTargetValues(),
+            rules.failOnEmptySource(),
+            rules.arrayAsRange(),
+            rules.stringIncludes(),
+            rules.exactEquality()
+        ]));
     }
+
+    if (query.search) {
+        const searchTerm = query.search.toLowerCase();
+        result = result.filter(item =>
+            item.date.toLowerCase().includes(searchTerm) ||
+            item.customer.toLowerCase().includes(searchTerm) ||
+            item.seller.toLowerCase().includes(searchTerm)
+            // || item.total.toString().toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (query.sort) {
+        const [field, order] = query.sort.split(':');
+        if (field && order) {
+            result = sortCollection(result, field, order);
+        }
+    }
+
+    const total = result.length;
+    const limit = parseInt(query.limit) || 10;
+    const page = parseInt(query.page) || 1;
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const items = result.slice(start, end);
+
+    lastQuery = nextQuery;
+    lastResult = { total, items };
+
+    return lastResult;
 };
 
 export function initData() {
