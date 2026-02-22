@@ -13,21 +13,23 @@ export function initTable(settings, onAction) {
 
     // @todo: #1.2 —  вывести дополнительные шаблоны до и после таблицы
     [...before].reverse().forEach(item => {
-        root[item] =cloneTemplate(item);
+        root[item] = cloneTemplate(item);
         root.container.prepend(root[item].container);
     });
 
     after.forEach(item => {
-        root[item] =cloneTemplate(item);
+        root[item] = cloneTemplate(item);
         root.container.append(root[item].container);
     });
 
     // @todo: #1.3 —  обработать события и вызвать onAction()
     root.container.addEventListener('change', () => {
+        console.log('Изменение в таблице');
         onAction();
     });
 
     root.container.addEventListener('reset', () => {
+        console.log('Сброс фильтров');
         setTimeout(() => {
             onAction();
         }, 0);
@@ -35,13 +37,29 @@ export function initTable(settings, onAction) {
 
     root.container.addEventListener('submit', (event) => {
         event.preventDefault();
+        console.log('Отправка формы', event.submitter);
         onAction(event.submitter);
     });
 
     const render = (data) => {
         // @todo: #1.1 — преобразовать данные в массив строк на основе шаблона rowTemplate
-        
-        const nextRows = data.map(item => { // item — объект с данными для одной строки
+        console.log('Рендер данных', data);
+        console.log('Количество строк данных', data.length);
+
+        if(!data || !Array.isArray(data)) {
+            console.error('Некорректные данные для рендера', data);
+            return;
+        }
+
+        if(!root.elements || !root.elements.rows) {
+            console.error('Контейнер для строк не найден', root.elements);
+            return;
+        }
+
+        console.log('Очищение старых строк');
+
+        const nextRows = data.map((item, index) => { // item — объект с данными для одной строки
+            console.log(`Создание строки ${index}`, item);
             const row = cloneTemplate(rowTemplate); // row — клонированный шаблон строки
             Object.keys(item).forEach(key => { // перебираем ключи объекта с данными
                 const element = row.elements[key]; // ищем элемент в строке по имени ключа
@@ -58,8 +76,12 @@ export function initTable(settings, onAction) {
             });
             return row.container; // возвращаем готовую строку
         });
-        root.elements.rows.replaceChildren(...nextRows); // заменяем старые строки на новые
-    }
 
+        console.log('Готовые строки для рендера', nextRows.length);
+        console.log('Заменяем старые строки на новые');
+        root.elements.rows.replaceChildren(...nextRows); // заменяем старые строки на новые
+        console.log('Рендер завершен');
+    }
+    console.log('Таблица инициализирована', root);
     return {...root, render}; // возвращаем контейнер, элементы и функцию render
 }
