@@ -35,6 +35,14 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
 
         pageCount = Math.ceil(total / limit);
 
+        if(pageCount === 0) {
+            pages.replaceChildren(); // очищаем контейнер страниц, если нет данных
+            fromRow.textContent = '0'; // обновляем номер первой строки
+            toRow.textContent = '0'; // обновляем номер последней строки
+            totalRows.textContent = '0'; // обновляем общее количество строк
+            return;
+        }
+
         const visiblePages = getPages(page, pageCount, 5); // получаем массив видимых страниц
 
         pages.replaceChildren(...visiblePages.map(pageNumber => {

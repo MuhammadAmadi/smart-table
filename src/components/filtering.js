@@ -4,7 +4,7 @@
 // const compare = createComparison(defaultRules);
 
 export function initFiltering(elements) {
-    const updateIndexes = (indexes) => {
+    const updateIndexes = (elements, indexes) => {
         elements.searchBySeller.innerHTML = '<option value="" selected>-</option>';
 
         Object.values(indexes.sellers).forEach(name => {

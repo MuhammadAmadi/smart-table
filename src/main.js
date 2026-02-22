@@ -128,8 +128,8 @@ async function init() {
         const filteringHandlers = initFiltering(sampleTable.filter.elements);
         applyFiltering = filteringHandlers.applyFiltering;
         updateIndexes = filteringHandlers.updateIndexes;
-        
-        updateIndexes(indexes);
+
+        updateIndexes(sampleTable.filter.elements, indexes);
 
         const paginationHandlers = initPagination(
             sampleTable.pagination.elements,
