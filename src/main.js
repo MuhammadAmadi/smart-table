@@ -12,6 +12,9 @@ import { initSearching } from './components/searching.js';
 
 import {initData} from "./data.js";
 
+let isLoading = false;
+let loadingEl = null
+
 let api;
 let applyPagination;
 let updatePagination;
@@ -48,6 +51,9 @@ const sampleTable = initTable({
  * @param {HTMLButtonElement?} action
  */
 async function render(action) {
+    isLoading = true;
+    if(loadingEl) loadingEl.style.display = 'block'; // отображаем индикатор загрузки, если он есть
+
     let state = collectState(); // состояние полей из таблицы
 
     if(!state.rowsPerPage) state.rowsPerPage = 10; // значение по умолчанию для количества строк на странице
@@ -83,6 +89,9 @@ async function render(action) {
     console.log('Итоговый запрос', query);
 
     const {total, items} = await api.getRecords(query);
+
+    isLoading = false;
+    if(loadingEl) loadingEl.style.display = 'none'; // скрываем индикатор загрузки, если он есть
 
     if(updatePagination) {
         updatePagination(total, query);
@@ -150,6 +159,13 @@ async function init() {
         console.log('Первый рендер завершен');
     } catch (error) {
         console.error('Ошибка при инициализации приложения', error);
+        if(loadingEl) {
+            loadingEl.style.display = 'none'; // скрываем индикатор загрузки, если он есть
+            const errorEl = document.createElement('div');
+            errorEl.style.cssText = 'padding: 20px; background: #ffdddd; border: 1px solid #ff0000; margin: 10px; color: #000;';
+            errorEl.textContent = 'Ошибка при загрузке данных: ' + error.message;
+           appRoot.prepend(errorEl);
+        }
     }
 }
 
@@ -168,9 +184,13 @@ async function init() {
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
 
+loadingEl = document.createElement('div');
+loadingEl.id = 'loading';
+loadingEl.style.cssText = 'display: none; padding: 20px; text-align: center; background: #f0f0f0; border: 1px solid #ccc; margin: 10px;';
+loadingEl.textContent = 'Загрузка...';
+appRoot.prepend(loadingEl);
 
-
-(async function () {
+document.addEventListener('DOMContentLoaded', async() => {
     try {
         console.log('Инициализация приложения...');
         await init();
@@ -178,4 +198,4 @@ appRoot.appendChild(sampleTable.container);
     } catch (error) {
         console.error('Ошибка при инициализации приложения', error);
     }
-})();
+});
