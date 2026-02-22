@@ -1,4 +1,4 @@
-//window.tableReady = false; // флаг готовности таблицы
+window.tableReady = false; // флаг готовности таблицы
 import './fonts/ys-display/fonts.css';
 import './style.css';
 
@@ -79,6 +79,8 @@ async function render(action) {
     }
 
     sampleTable.render(items);
+    window.tableReady = true; // устанавливаем флаг готовности таблицы после первого рендера
+    document.body.setAttribute('data-table-ready', 'true'); // добавляем атрибут для стилизации готовности
 }
 
 async function init() {
