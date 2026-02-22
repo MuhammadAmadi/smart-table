@@ -43,7 +43,7 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
         //     totalRows.textContent = '0'; // обновляем общее количество строк
         //     return;
         // }
-        const displayPageCount = pageCount > 0 ? pageCount : 2; // количество отображаемых страниц (не менее 5)
+        const displayPageCount = pageCount > 0 ? pageCount : 5; // количество отображаемых страниц (не менее 5)
         const visiblePages = getPages(page, displayPageCount, 5); // получаем массив видимых страниц
 
         pages.replaceChildren(...visiblePages.map(pageNumber => {

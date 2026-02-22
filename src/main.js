@@ -21,6 +21,8 @@ let updateIndexes;
 let applySearching;
 let applySorting;
 
+window.tableReady = false; // таблица готова к взаимодействию
+
 /**
  * Сбор и обработка полей из таблицы
  * @returns {Object}
@@ -83,6 +85,8 @@ async function render(action) {
     } else {
         sampleTable.render([]); // рендерим пустую таблицу, если нет данных
     }
+    window.tableReady = true; // таблица готова к взаимодействию
+    document.body.setAttribute('data-table-ready', 'true');
 }
 
 async function init() {
@@ -142,6 +146,4 @@ async function init() {
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
 
-Promise.resolve().then(() => {
-    init();
-});
+init();

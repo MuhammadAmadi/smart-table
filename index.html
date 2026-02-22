@@ -141,6 +141,28 @@
         <div class="table-column" data-name="total" role="cell"></div>
     </div>
 </template>
+<script>
+    // Ждем загрузки страницы и данных
+    window.addEventListener('load', function() {
+      // Проверяем каждые 100мс, загрузились ли данные
+      const checkInterval = setInterval(function() {
+        if (window.tableReady) {
+          // Данные загружены - добавляем атрибут для тестов
+          document.body.setAttribute('data-test-ready', 'true');
+          clearInterval(checkInterval);
+          console.log('Таблица готова, атрибут установлен');
+        }
+      }, 100);
+      
+      // Таймаут на случай, если данные не загрузятся
+      setTimeout(function() {
+        if (!window.tableReady) {
+          console.log('Таймаут ожидания данных');
+          document.body.setAttribute('data-test-ready', 'timeout');
+        }
+      }, 5000);
+    });
+  </script>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
