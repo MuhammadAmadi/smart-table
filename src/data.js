@@ -1,4 +1,4 @@
-const BASE_URL = process.env.BASE_URL || 'https://webinars.webdev.education-services.ru/sp7-api';
+const BASE_URL = 'https://webinars.webdev.education-services.ru/sp7-api';
 
 let sellers;
 let customers;
