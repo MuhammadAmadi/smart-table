@@ -1,11 +1,12 @@
-
 export function initSearching(searchField) {
-    // @todo: #5.1 — настроить компаратор
     return (query, state, action) => {
-        if(state[searchField] && state[searchField].trim() !== '') {
-            return Object.assign({}, query, {
-                search: state[searchField].trim()
-            });
+        // ИЗМЕНЕНО: Игнорируем action для поиска, используем только state
+        const searchValue = state[searchField];
+        if (searchValue && searchValue.trim() !== '') {
+            return {
+                ...query,
+                search: searchValue.trim()
+            };
         }
         return query;
     };
