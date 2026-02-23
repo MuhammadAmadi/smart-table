@@ -1,32 +1,32 @@
-import { sortMap } from "../lib/sort.js";
+import {sortCollection, sortMap} from "../lib/sort.js";
 
 export function initSorting(columns) {
-    // ИЗМЕНЕНО: Убираем добавление обработчиков здесь, так как они добавляются в main.js
-    // Теперь эта функция только возвращает applySorting
-    
-    return (query, state, action) => {
+    return (data, state, action) => {
         let field = null;
         let order = null;
 
-        // Если это событие от кнопки сортировки
         if (action && action.name === 'sort') {
-            const button = action;
-            
-            // ИЗМЕНЕНО: Не меняем data-value здесь, так как это делает обработчик в main.js
-            // Просто берем текущее значение
-            field = button.dataset.field;
-            order = button.dataset.value;
+            // @todo: #3.1 — запомнить выбранный режим сортировки
+            action.dataset.value = sortMap[action.dataset.value]; // обновляем режим сортировки
+            field = action.dataset.field; // получаем поле для сортировки
+            order = action.dataset.value; // получаем режим сортировки
+
+            // @todo: #3.2 — сбросить сортировки остальных колонок
+            columns.forEach(col => {
+                if (col.dataset.field !== action.dataset.field) {
+                    col.dataset.value = 'none'; // сбрасываем режим сортировки
+                }
+            });
         } else {
-            // Ищем активную сортировку
-            columns.forEach(column => {
-                if (column && column.dataset.value && column.dataset.value !== 'none') {
-                    field = column.dataset.field;
-                    order = column.dataset.value;
+            // @todo: #3.3 — получить выбранный режим сортировки
+            columns.forEach(col => {
+                if (col.dataset.value !== 'none') {
+                    field = col.dataset.field; // получаем поле для сортировки
+                    order = col.dataset.value; // получаем режим сортировки
                 }
             });
         }
 
-        const sort = (field && order && order !== 'none') ? `${field}:${order}` : null;
-        return sort ? { ...query, sort } : query;
-    };
+        return sortCollection(data, field, order);
+    }
 }

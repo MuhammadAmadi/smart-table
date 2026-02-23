@@ -1,69 +1,55 @@
-export function initFiltering(elements) {
-    const updateIndexes = (elements, indexes) => {
-        // Очищаем и заполняем селект продавцов
-        elements.searchBySeller.innerHTML = '<option value="" selected>-</option>';
+import {createComparison, defaultRules} from "../lib/compare.js";
 
-        // Добавляем опции для каждого продавца
-        if (indexes.sellers) {
-            Object.values(indexes.sellers).forEach(name => {
+// @todo: #4.3 — настроить компаратор
+const compare = createComparison(defaultRules);
+
+export function initFiltering(elements, indexes) {
+    // @todo: #4.1 — заполнить выпадающие списки опциями
+    Object.keys(indexes).forEach(elementName => {
+        elements[elementName].append(
+            ...Object.values(indexes[elementName]).map(item => {
                 const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                elements.searchBySeller.appendChild(option);
-            });
-        }
-    };
-
-    const applyFiltering = (query, state, action) => {
-        // ИЗМЕНЕНО: Обработка action для очистки полей
-        if (action) {
-            if (action.name === 'clear') {
+                option.value = item;
+                option.textContent = item;
+                return option;
+            })
+        );
+    });
+    return (data, state, action) => {
+        // @todo: #4.2 — обработать очистку поля
+        if(action) {
+            if(action.name === 'clear') {
                 const field = action.dataset.field;
-                if (field === 'date') {
+                if(field === 'date') {
                     elements.searchByDate.value = '';
                 } else if (field === 'customer') {
                     elements.searchByCustomer.value = '';
                 }
-                // Возвращаем query без изменений, но поля уже очищены
-                // Данные обновятся при следующем render
-            } else if (action.dataset?.name === 'reset') {
+            } else if (action.dataset.name === 'reset') {
                 elements.searchByDate.value = '';
                 elements.searchByCustomer.value = '';
                 elements.searchBySeller.value = '';
                 elements.totalFrom.value = '';
                 elements.totalTo.value = '';
-                
-                // Также очищаем поиск
-                const searchInput = document.querySelector('input[name="search"]');
-                if (searchInput) searchInput.value = '';
             }
         }
+        // @todo: #4.5 — отфильтровать данные используя компаратор
+        const filterCriteria = {};
+        Object.keys(state).forEach(key => {
+            if (state[key] !== '') {
+                filterCriteria[key] = state[key];
+            }
+        });
 
-        const filter = {};
-
-        // ИЗМЕНЕНО: Проверяем наличие элементов перед доступом к value
-        if (elements.searchByDate && elements.searchByDate.value) {
-            filter['filter[date]'] = elements.searchByDate.value;
-        }
-        
-        if (elements.searchByCustomer && elements.searchByCustomer.value) {
-            filter['filter[customer]'] = elements.searchByCustomer.value;
-        }
-        
-        if (elements.searchBySeller && elements.searchBySeller.value && elements.searchBySeller.value !== '-') {
-            filter['filter[seller]'] = elements.searchBySeller.value;
-        }
-        
-        if (elements.totalFrom && elements.totalFrom.value) {
-            filter['filter[totalFrom]'] = elements.totalFrom.value;
-        }
-        
-        if (elements.totalTo && elements.totalTo.value) {
-            filter['filter[totalTo]'] = elements.totalTo.value;
+        if(state.totalFrom !== '' || state.totalTo !== '') { 
+            const from = state.totalFrom !== '' ? parseFloat(state.totalFrom) : '';
+            const to = state.totalTo !== '' ? parseFloat(state.totalTo) : '';
+            filterCriteria.total = [from, to];
         }
 
-        return Object.keys(filter).length ? { ...query, ...filter } : query;
-    };
+        delete filterCriteria.totalFrom;
+        delete filterCriteria.totalTo;
 
-    return { updateIndexes, applyFiltering };
+        return data.filter(row => compare(row, filterCriteria));
+    }
 }
